@@ -1,0 +1,110 @@
+<html>
+<head>
+    <title>WebSocket Video Stream</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" controls autoplay></video>
+    <script>
+        const video = document.getElementById('video');
+        const ws = new WebSocket('ws://localhost:8000/graphql', 'graphql-ws');
+        const mediaSource = new MediaSource();
+        let sourceBuffer;
+
+        video.src = URL.createObjectURL(mediaSource);
+
+        mediaSource.addEventListener('sourceopen', () => {
+            console.log('MediaSource opened');
+            createSourceBuffer();
+        });
+
+        function createSourceBuffer() {
+            if (mediaSource.readyState === 'open') {
+                try {
+                    sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.64001E, mp4a.40.2"');
+                    sourceBuffer.addEventListener('updateend', onSourceBufferUpdateEnd);
+                    sourceBuffer.addEventListener('error', onSourceBufferError);
+                } catch (e) {
+                    console.error('Error creating SourceBuffer:', e);
+                }
+            }
+        }
+
+        function onSourceBufferUpdateEnd() {
+            console.log('SourceBuffer update ended');
+            // Check if we can append more data
+            if (sourceBuffer && !sourceBuffer.updating) {
+                console.log('Ready to append more data');
+            }
+        }
+
+        function onSourceBufferError(event) {
+            console.error('SourceBuffer error:', event);
+            // Handle the error and recreate SourceBuffer if necessary
+            if (sourceBuffer) {
+                try {
+                    mediaSource.removeSourceBuffer(sourceBuffer);
+                    sourceBuffer = null; // Clear the reference
+                    createSourceBuffer(); // Recreate SourceBuffer
+                } catch (e) {
+                    console.error('Error removing SourceBuffer:', e);
+                }
+            }
+        }
+
+        ws.onopen = () => {
+            console.log('WebSocket connection opened');
+            ws.send(JSON.stringify({
+                "id": "1",
+                "type": "start",
+                "payload": {
+                    "query": "subscription { count }"
+                }
+            }));
+        };
+
+        ws.onmessage = (event) => {
+            console.log('Message received:', event.data);
+            const message = JSON.parse(event.data);
+
+            if (message.type === 'data' && sourceBuffer && !sourceBuffer.updating) {
+                const videoData = message.payload.data.count; // Adjust this according to your server's response structure
+
+                // Decode Base64 to binary
+                const byteCharacters = atob(videoData);
+                const byteNumbers = new Uint8Array(byteCharacters.length);
+
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+
+                console.log(`Appending ${byteNumbers.length} bytes to sourceBuffer`);
+                try {
+                    if (mediaSource.readyState === 'open') {
+                        sourceBuffer.appendBuffer(byteNumbers);
+                    } else {
+                        console.warn('MediaSource is not open for appending data.');
+                    }
+                } catch (e) {
+                    console.error('Error appending buffer:', e);
+                }
+            } else if (message.type === 'complete') {
+                console.log('Video stream complete');
+                // Only call endOfStream if MediaSource is open
+                if (mediaSource.readyState === 'open') {
+                    mediaSource.endOfStream(); // Mark the end of the stream
+                } else {
+                    console.warn('Cannot call endOfStream: MediaSource is not open.');
+                }
+ }
+        };
+
+        ws.onerror = (error) => {
+            console.log('WebSocket error:', error);
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket connection closed');
+        };
+    </script>
+</body>
+</html>

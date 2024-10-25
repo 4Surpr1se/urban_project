@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "-8-django"
+version = "0.1.0"
+description = ""
+authors = ["4Surpr1se <aaa_nnn_96@mail.ru>"]
+readme = "README.md"
+packages = [{include = "_8_django"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Django = "^5.1.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

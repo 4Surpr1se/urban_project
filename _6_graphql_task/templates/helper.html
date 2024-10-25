@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Video Stream</title>
+    <script>
+        const ws = new WebSocket("ws://localhost:8000/graphql", "graphql-ws");
+        ws.onopen = function (event) {
+            ws.send({
+                "id": "1",
+                "type": "start",
+                "payload": {
+                    "query": "subscription { count() }"
+                }
+            })
+        }
+
+        ws.onmessage = function (event) {
+            const videoData = event.data;
+            // Handle the received video data (e.g., display it)
+            console.log(videoData);
+        };
+
+        function startStream() {
+            ws.send("start_stream");
+        }
+    </script>
+</head>
+<body>
+<h1>WebSocket Video Stream</h1>
+<button onclick="startStream()">Start Video Stream</button>
+</body>
+</html>

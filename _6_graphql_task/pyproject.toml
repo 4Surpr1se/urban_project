@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "graphql"
+version = "0.1.0"
+description = ""
+authors = ["4Surpr1se <99213922+4Surpr1se@users.noreply.github.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = {extras = ["standard"], version = "^0.115.3"}
+strawberry-graphql = {version = "^0.246.0", extras = ["fastapi"]}
+setuptools = "^75.2.0"
+gql = {extras = ["all"], version = "^3.5.0"}
+graphql-core = "^3.2.5"
+gunicorn = "^23.0.0"
+waitress = "^3.0.0"
+uvicorn = "^0.32.0"
+imutils = "^0.5.4"
+opencv-python = "^4.10.0.84"
+numpy = "^2.1.2"
+moviepy = "^1.0.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
